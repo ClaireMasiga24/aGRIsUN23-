@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -34,7 +34,7 @@
         .menu button:hover {
             background-color: #0056b3;
         }
-        .response, .sms {
+        .response, .sms, .error, .loading {
             margin-top: 20px;
             padding: 10px;
             border-radius: 5px;
@@ -46,6 +46,14 @@
         .sms {
             background-color: #d4edda;
         }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .loading {
+            background-color: #fff3cd;
+            color: #856404;
+        }
         #speakButton {
             display: none;
             margin-top: 10px;
@@ -55,6 +63,7 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            width: 100%;
         }
         #speakButton:hover {
             background-color: #218838;
@@ -99,12 +108,15 @@
         <button onclick="selectQuestion('pests')">3. Pests and Diseases</button>
     </div>
 
+    <div id="loading" class="loading hidden">Fetching data, please wait...</div>
+    <div id="error" class="error hidden"></div>
     <div id="response" class="response hidden"></div>
     <div id="smsResponse" class="sms hidden"></div>
     <button id="speakButton" onclick="speakResponse()">Speak SMS</button>
 
     <script>
         let selectedCountry = '';
+        let selectedRegion = '';
         let currentResponse = '';
         let preference = 'text'; // Default preference is text
 
@@ -132,40 +144,74 @@
         }
 
         function selectRegion(region) {
+            selectedRegion = region;
             document.getElementById('regionMenu').classList.add('hidden');
             document.getElementById('questionMenu').classList.remove('hidden');
             document.getElementById('response').innerText += ` Selected Region: ${region}. Please select a question.`;
         }
 
-        function selectQuestion(question) {
-            let responseText = '';
-            switch(question) {
-                case 'weather':
-                    responseText = 'AI Generated SMS: Today\'s Weather in your region is Sunny with light clouds. Ideal for rice farming.';
-                    break;
-                case 'soil':
-                    responseText = 'AI Generated SMS: Soil Condition is good. Moisture levels are suitable for planting.';
-                    break;
-                case 'pests':
-                    responseText = 'AI Generated SMS: Monitor for rice weevils and leaf blight.';
-                    break;
-                default:
-                    responseText = 'Invalid option selected.';
-            }
-
+        async function selectQuestion(question) {
             document.getElementById('questionMenu').classList.add('hidden');
+            document.getElementById('loading').classList.remove('hidden');
             document.getElementById('response').innerText += ` You asked about: ${question}.`;
-            
-            document.getElementById('smsResponse').innerText = responseText;
-            document.getElementById('smsResponse').classList.remove('hidden');
 
-            currentResponse = responseText;
+            // Prepare payload
+            const payload = {
+                country: selectedCountry,
+                region: selectedRegion,
+                question: question
+            };
 
-            // Show Speak button if user prefers speech
-            if (preference === 'speech') {
-                document.getElementById('speakButton').style.display = 'inline';
-            } else {
-                document.getElementById('speakButton').style.display = 'none';
+            try {
+                const response = await fetch('/earthdata/fetch', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                document.getElementById('loading').classList.add('hidden');
+
+                if (result.success) {
+                    // Process and display the data based on the question
+                    let responseText = '';
+                    switch(question) {
+                        case 'weather':
+                            responseText = `Today's Weather in ${selectedRegion}, ${selectedCountry}: ${result.data.weatherDescription}. Temperature: ${result.data.temperature}°C.`;
+                            break;
+                        case 'soil':
+                            responseText = `Soil Condition in ${selectedRegion}, ${selectedCountry}: ${result.data.soilCondition}. Moisture Level: ${result.data.moistureLevel}%.`;
+                            break;
+                        case 'pests':
+                            responseText = `Pests and Diseases in ${selectedRegion}, ${selectedCountry}: ${result.data.pestsInfo}. Recommended Actions: ${result.data.recommendedActions}.`;
+                            break;
+                        default:
+                            responseText = 'Invalid question type.';
+                    }
+
+                    document.getElementById('smsResponse').innerText = responseText;
+                    document.getElementById('smsResponse').classList.remove('hidden');
+                    currentResponse = responseText;
+
+                    // Show Speak button if user prefers speech
+                    if (preference === 'speech') {
+                        document.getElementById('speakButton').style.display = 'inline';
+                    } else {
+                        document.getElementById('speakButton').style.display = 'none';
+                    }
+                } else {
+                    // Handle server-side errors
+                    document.getElementById('error').innerText = result.message || 'An error occurred.';
+                    document.getElementById('error').classList.remove('hidden');
+                }
+            } catch (error) {
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('error').innerText = 'Failed to fetch data. Please try again later.';
+                document.getElementById('error').classList.remove('hidden');
+                console.error('Error:', error);
             }
         }
 
