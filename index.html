@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -34,28 +34,23 @@
         .menu button:hover {
             background-color: #0056b3;
         }
-        .response {
+        .response, .sms {
             margin-top: 20px;
-            background-color: #e9ecef;
             padding: 10px;
             border-radius: 5px;
-            display: none; /* Hidden by default */
-        }
-        .sms {
-            margin-top: 10px;
-            background-color: #d4edda; /* Light green for SMS */
-            padding: 10px;
-            border-radius: 5px;
-            display: none; /* Hidden by default */
-        }
-        .hidden {
             display: none;
         }
+        .response {
+            background-color: #e9ecef;
+        }
+        .sms {
+            background-color: #d4edda;
+        }
         #speakButton {
-            display: none; /* Hidden by default */
+            display: none;
             margin-top: 10px;
             padding: 10px;
-            background-color: #28a745; /* Green color for Speak button */
+            background-color: #28a745;
             color: white;
             border: none;
             border-radius: 5px;
@@ -64,15 +59,25 @@
         #speakButton:hover {
             background-color: #218838;
         }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <h1>Rice Farming USSD</h1>
-    <div id="ussdMenu" class="menu">
+
+    <!-- Preference for SMS type -->
+    <div id="preferenceMenu" class="menu">
+        <button onclick="selectPreference('text')">1. Text SMS</button>
+        <button onclick="selectPreference('speech')">2. Speech SMS</button>
+    </div>
+
+    <div id="ussdMenu" class="menu hidden">
         <button onclick="selectCountry('Uganda')">1. Uganda</button>
         <button onclick="selectCountry('Kenya')">2. Kenya</button>
     </div>
-    
+
     <div id="regionMenu" class="menu hidden">
         <div id="ugandaRegions" class="hidden">
             <button onclick="selectRegion('Eastern Uganda')">1. Eastern Uganda</button>
@@ -101,6 +106,15 @@
     <script>
         let selectedCountry = '';
         let currentResponse = '';
+        let preference = 'text'; // Default preference is text
+
+        function selectPreference(selectedPreference) {
+            preference = selectedPreference;
+            document.getElementById('preferenceMenu').classList.add('hidden');
+            document.getElementById('ussdMenu').classList.remove('hidden');
+            document.getElementById('response').innerText = `Selected Preference: ${preference === 'text' ? 'Text SMS' : 'Speech SMS'}. Please select a country.`;
+            document.getElementById('response').classList.remove('hidden');
+        }
 
         function selectCountry(country) {
             selectedCountry = country;
@@ -114,8 +128,7 @@
                 document.getElementById('kenyaRegions').classList.remove('hidden');
                 document.getElementById('ugandaRegions').classList.add('hidden');
             }
-            document.getElementById('response').innerText = `Selected Country: ${country}. Please select a region.`;
-            document.getElementById('response').classList.remove('hidden');
+            document.getElementById('response').innerText += ` Selected Country: ${country}. Please select a region.`;
         }
 
         function selectRegion(region) {
@@ -140,18 +153,20 @@
                     responseText = 'Invalid option selected.';
             }
 
-            // Show the question menu and the AI response
             document.getElementById('questionMenu').classList.add('hidden');
             document.getElementById('response').innerText += ` You asked about: ${question}.`;
-            document.getElementById('response').classList.remove('hidden');
             
-            // Simulating receiving an SMS
             document.getElementById('smsResponse').innerText = responseText;
             document.getElementById('smsResponse').classList.remove('hidden');
 
-            // Set the current response for speech
             currentResponse = responseText;
-            document.getElementById('speakButton').style.display = 'inline'; // Show the Speak button
+
+            // Show Speak button if user prefers speech
+            if (preference === 'speech') {
+                document.getElementById('speakButton').style.display = 'inline';
+            } else {
+                document.getElementById('speakButton').style.display = 'none';
+            }
         }
 
         function speakResponse() {

@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose'); // Ensure you require mongoose
 const dotenv = require('dotenv'); // Require dotenv
 const path = require('path'); // Import the path module
+const axios = require('axios');
 // Importing routes
 const ussdRoutes = require('./Routes/ussd');
 
