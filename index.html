@@ -132,7 +132,7 @@
             selectedCountry = country;
             document.getElementById('ussdMenu').classList.add('hidden');
             document.getElementById('regionMenu').classList.remove('hidden');
-            
+
             if (country === 'Uganda') {
                 document.getElementById('ugandaRegions').classList.remove('hidden');
                 document.getElementById('kenyaRegions').classList.add('hidden');
@@ -155,7 +155,6 @@
             document.getElementById('loading').classList.remove('hidden');
             document.getElementById('response').innerText += ` You asked about: ${question}.`;
 
-            // Prepare payload
             const payload = {
                 country: selectedCountry,
                 region: selectedRegion,
@@ -176,9 +175,8 @@
                 document.getElementById('loading').classList.add('hidden');
 
                 if (result.success) {
-                    // Process and display the data based on the question
                     let responseText = '';
-                    switch(question) {
+                    switch (question) {
                         case 'weather':
                             responseText = `Today's Weather in ${selectedRegion}, ${selectedCountry}: ${result.data.weatherDescription}. Temperature: ${result.data.temperature}°C.`;
                             break;
@@ -196,14 +194,12 @@
                     document.getElementById('smsResponse').classList.remove('hidden');
                     currentResponse = responseText;
 
-                    // Show Speak button if user prefers speech
                     if (preference === 'speech') {
                         document.getElementById('speakButton').style.display = 'inline';
                     } else {
                         document.getElementById('speakButton').style.display = 'none';
                     }
                 } else {
-                    // Handle server-side errors
                     document.getElementById('error').innerText = result.message || 'An error occurred.';
                     document.getElementById('error').classList.remove('hidden');
                 }
@@ -211,16 +207,14 @@
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('error').innerText = 'Failed to fetch data. Please try again later.';
                 document.getElementById('error').classList.remove('hidden');
-                console.error('Error:', error);
+                console.error(error);
             }
         }
 
         function speakResponse() {
-            if ('speechSynthesis' in window) {
+            if (currentResponse !== '') {
                 const utterance = new SpeechSynthesisUtterance(currentResponse);
-                window.speechSynthesis.speak(utterance);
-            } else {
-                alert('Sorry, your browser does not support text to speech!');
+                speechSynthesis.speak(utterance);
             }
         }
     </script>
